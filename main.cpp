@@ -1,4 +1,5 @@
 /* Nom: Pau Gallego Fagundez
+=============================
 S'ha d'optimitzar aquest codi tot el que pugueu.
 Fer un document PDF on s'explica detalladament com estava el codi i quina millora heu fet.
 Podeu modificar el codi tot el que vulgueu, però ha de mantenir les mateixes funcionalitats, no pot tenir noves ni tenir menys, el programa ha de fer el mateix.
