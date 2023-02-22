@@ -1,343 +1,228 @@
+/* Nom: Pau Gallego Fagundez
+S'ha d'optimitzar aquest codi tot el que pugueu.
+Fer un document PDF on s'explica detalladament com estava el codi i quina millora heu fet.
+Podeu modificar el codi tot el que vulgueu, però ha de mantenir les mateixes funcionalitats, no pot tenir noves ni tenir menys, el programa ha de fer el mateix.
+*/
+
+//Eliminamos Librerias, son inecesarias
 #include <iostream>
+#include <thread>
 
-//Creamos la cadena
-char TCadena[120];
+using namespace std;
 
-//Creamos las variables
-bool menu=true, mostrar, pal, igual;
-int a = 0;
+struct carta{
+  int numero;
+  string palo;
+};
+
+//Movemos la creacion de las estructuras fuera del main
+struct carta baraja[52] , mano[12], manoMaquina[12];
 
 //Declaramos las funciones
-int Longitud(char TCadena[120], bool mostrar);
-bool Palindrom(char TCadena[120]);
-int vocals(char TCadena[120]);
-char contar(char TCadena[120]);
-char reves(char TCadena[120]);
-bool lletraigual(char TCadena[120]);
+int mostrarcarta(int puntos, carta mano);
+bool puntuacion(int puntos);
 
-int main ( int argc, char const *argv[]){
+//Movemos las variables fuera del main
+bool repetir = true;
+int opcion,num_cartas_mano, carta_mano_maquina, puntos, puntosMaquina, turno = 0, contador=0;
+const string palos[4] = {"Corazones", "Diamantes", "Picas", "Treboles"};
 
-    //Pedimos y asignamos valores a TCadena
-    printf("Introdueix una cadena de caracters:");
-    fgets(TCadena,120,stdin);
+int main(){
 
-    while (menu){
+  //Generamos num aleatorio
+  time_t t;
+  srand((unsigned)time(&t));
 
-        //Pedimos y asignamos un valor a la avriable a (Mostramos menu)
-        printf("Seleccióna una de les seguents opcions:\n(1) Tornar i mostrar la seva longitud.\n(2) Tornar (bool) si la frase és palíndrom o no.\n(3) Tornar quantes vocals (majuscules i minuscules) té la frase.\n(4) Tornar la lletra més utilitzada.\n(5) Tornar i mostrar la frase al revés.\n(6) Tornar (bool) si comença i acaba per la mateixa lletra.\n(0) Sortir\n");
-        scanf("%d", &a);
+  //Bucle creacion de cartas
+  for (int i = 0; i < 13; i++)
+  {
+    for (int j = 0; j < 4; j++)
+    {
+      baraja[contador].numero = i + 1;
+      baraja[contador].palo = palos[j];
+      contador++;
+    }
+  }
 
-        switch (a){
-            case 1:
+  // Repartir cartas
+  for (int contadorBaraja = 0; contadorBaraja < 2; contadorBaraja++){
+    mano[contadorBaraja] = baraja[rand() % 52];
+  }
 
-                //Modificamos mostrar a true
-                mostrar=true;
+  do{
+    cout << "\033[1;31m \n\nMenu de Opciones \033[0m" << endl;
+    cout << "\033[1;32m 1. Robar carta \033[0m" << endl;
+    cout << "\033[1;32m 2. Mostrar mano \033[0m" << endl;
+    cout << "\033[1;32m 3. Plantarse \033[0m" << endl;
+    cout << "\033[1;32m 4. Ver baraja \033[0m" << endl;
+    cout << "\033[1;32m 0. SALIR \033[0m" << endl;
 
-                //Llamamos a la funcion Longitud enviando como parametros Tcadena y el booleano mostrar
-                Longitud(TCadena,mostrar);
+    if (turno == 0){
+      cout << "\033[1;31m \nTus cartas son: \033[0m" << endl;
+      puntos = 0;
 
-                break;
+      for (int contadorMano = 0; contadorMano < 12; contadorMano++){
+        if (mano[contadorMano].palo != ""){
 
-            case 2:
-
-                //Llamamos a la funcion Longitud enviando como parametros Tcadena y el booleano mostrar
-                pal= Palindrom(TCadena);
-
-                //Si pal es true, mostramos que es palindromo
-                if(pal){
-                    printf("Es palindrom ^^\n");
-
-                //Sino, mostramos que no lo es
-                }else{
-                    printf("NO es palindrom :c\n");
-                }
-
-                break;
-
-            case 3:
-
-                //Mostramos el return de vocals enviando TCadena como parametro
-                printf("La cadena de caracters te %d vocals\n", vocals(TCadena));
-
-                break;
-            
-            case 4:
-
-                //Mostramos el return de contar enviando TCadena como parametro
-                printf("La lletra mes utilitzada es: %c\n", contar(TCadena));
-
-
-                break;
-            case 5:
-
-                //Llamamos i mostramos la funcion reves enviando TCadena como parametro
-                std::cout << "La cadena al reves es:" << reves(TCadena) << "\n";
-
-                break;
-            case 6:
-
-                    //Asignamos a igual el return de lletraigual enviando como parametro TCadena
-                    igual= lletraigual(TCadena);
-
-                    //Si es true, mostramos que la pirmera y la ultima letra son iguales
-                    if(igual){
-                        printf("La pirmera i la ultima lletra son iguals\n");
-
-                    //Sino, mostramos que no
-                    }else{
-                        printf("La pirmera i la ultima lletra NO son iguals\n");
-                    }
-                
-
-                break;
-            case 0:
-
-                //Canviamos el booleano menu a false
-                menu=false;
-                break;
-            default:
-                printf("Opció no valida :c\n");
-                break;
+          //Llamamos a la funcion mostrarcarta y le asignamos el return a putnos
+          puntos = mostrarcarta(puntos, mano[contadorMano]);
+          num_cartas_mano++;
         }
-    }    
+      }
 
-    system("PAUSE");
-    return 0;
+      //Llamamos a la funcion repetir, y le asignamos el return a repetir
+      repetir=puntuacion(puntos);
 
-}
+      //Si repetir es false, salimos del bucle
+      if(!repetir){break;}
+    }
 
-//Funcion 1
-int Longitud(char TCadena[120], bool mostrar){
+    cout << "\nIngrese una opcion: ";
+    cin >> opcion;
+    turno++;
 
-    //Creeamos Variables
-    bool found=false;
-    int longitud=0;
-        
-        //Bucle que pase por todas las posiciones de TCadena mientars el bool Found sea false
-        for(int i=0; i<120 && !found;i++){
+    //Arreglamos fallon con cin
+    cin.ignore();
 
-            //Si la posicion actual es igual a \0 entramos al if
-            if(TCadena[i]=='\0'){
+    switch (opcion){
+    case 1:
+      system("clear");
+      mano[num_cartas_mano + 1] = baraja[rand() % 52];
+      cout << "\033[1;32mTu carta es: \033[0m" << endl;
 
-                //Asignamos el valor de i -1 a longitud(longitud de posiciones ocupadas)
-                longitud=i-1;
-
-                //Volvemos true el booleano found
-                found=true;
-            }
-        }
-
-    //Si el parametro mostrar es true, mostramos por pantalla el valor de longitud y lo devolvemos
-    if (mostrar){
-        printf("La longitud es: %d\n", longitud);
-        return longitud;
+      //Mismo caso que el anterior con la funcion mostrarcarta     
+      puntos = mostrarcarta(puntos, mano[num_cartas_mano +1]);
+      num_cartas_mano++;
     
-    //Sino, solo devolvemos el valor, no lo mostramos
-    }else{
-        return longitud;
-    }
+      //Mismo caso que el anterior con la funcion puntuacion  
+      repetir=puntuacion(puntos);
+      break;
 
-}
+    case 2:
+      system("clear");
+      cout << "\033[1;31m \nTus cartas son: \033[0m" << endl;
+      puntos = 0;
+      for (int contadorMano = 0; contadorMano < 12; contadorMano++){
+        if (mano[contadorMano].palo != ""){
 
-//Funcion 2
-bool Palindrom(char TCadena[120]){
-
-    //Creamos booleanos
-    bool mostrar=false;
-    bool palindromo=true;
-
-    //Creamos variable con el return de la funcion Longitud
-    int max= Longitud(TCadena,mostrar);
-
-    //Bucle que pase todas las posiciones de TCadena
-    for(int i=0; i<max;i++){
-
-        //Si el valor de la posicion actual de TCadena es diferente a la misma posicion empezando al reves -1(evitamos el \0) entramos al if 
-        if(TCadena[i]!=TCadena[max-i-1]){
-
-            //Modificamos palindromo a false
-            palindromo=false;
+          //Mismo caso que el anterior con la funcion mostrarcarta 
+          puntos = mostrarcarta(puntos, mano[contadorMano]);
+          num_cartas_mano++;
         }
-    }
+      }
+      cout << "\033[1;32mTienes " << puntos << " puntos \033[0m" << endl;
+      break;
 
-    //Devolvemos el booleano palindromo
-    return palindromo;
-
-}
-
-//Funcion 3
-int vocals(char TCadena[120]){
-
-    //Creamos una cadena con vocales
-    char vocal[10]={'A','E','I','O','U','a','e','i','o','u'};
-
-    //Creamos las variables
-    char a;
-    char b;
-    int contar=0;
-
-    bool mostrar=false;
-
-    //Creamos variable con el return de la funcion Longitud
-    int max= Longitud(TCadena,mostrar);
-
-    //Bucle longitud de TCadena
-    for(int i=0; i<max;i++){
-
-        //Asignamos a la variable a el valor actual de TCadena
-        a=TCadena[i];
-
-        for(int j=0;j<10;j++){
-
-            //Asignamos a la variable b el valor actual de vocal
-            b=vocal[j];
-
-            //Si el valor de a es igual al de b, sumamos 1 a contar
-            if(a==b){
-                contar++;
-            }
-        }
-    }
-
-    //Devolvemos el valor de contar
-    return contar;
-}
-
-
-//Funcion 4
-
-char contar(char TCadena[120]){
-
-    //Cremaos la cadena letra
-    int letra[27][2];
-
-    //Creamos las variables
-    int comp,pos,cont=0;
-    bool found= false;
-    bool mostrar=false;
-    char result;
-
-
-
-    //Creamos variable con el return de la funcion Longitud
-    int max= Longitud(TCadena,mostrar);
-
-
-    //Bucle para inicializar el array letra desde el 97 hasta el 120 que es a-z en ascii
-    for (int i=97 ; i<123;i++){
-
-        letra[cont][0]=i;
-
-        //Inicializamod la segunda dimension con0
-        letra[cont][1] = 0;
-
-        cont++;
-    }
-
-    //Bucle que recorre todas las posiciones de TCadena
-    for(int i=0;i<max;i++){
-
-        //Modificamos found a false
-        found=false;
-
-        //Bucle que pare si found es true de todas las posiciones de letra
-        for(int j=0; j<27 && !found;j++){
-
-            //Si la posicion actual de letra tiene el mismo valor que la posicion actual de TCadena
-            if(letra[j][0]== TCadena[i] ){
-
-                //Modificamos found a true
-                found=true;
-
-                //Sumamos 1 a la segunda dimension de la posicion actual de letra
-                letra[j][1]++;
-            }
-
-        }
-
-    }
-
-    //Inicialicamos la variable con el numero de veces que ha salido la letra en la primera posicion
-    comp=letra[0][1];
-
-    //Bucle que recorre toda la cadena de letra
-    for(int i=0; i<27;i++){
-
-        //Si el valor de la segunda dimension de letra es mayor al valor de comp
-        if(letra[i][1]>comp){
-
-            //Le asignamos a comp el valor actual de la segunda dimension de letra
-            comp= letra[i][1];
-
-            //Guardamos la posicion en la variable pos
-            pos = i;
-        }
-
-    }
-
-    //Asignamos a result el valor  en char de la posicion pos de la primera dimension de letra
-    result= (char)letra[pos][0];
-
-    //Devolvemos result
-    return result;
-}
-
-
-
-//Funcion 5
-char reves(char TCadena[120]){
-
-    //creamos variable
-    bool mostrar=false;
-
-    //Creamos cadena de caracteres
-    char TCadenarev[120]="";
-
-    //Creamos variable con el return de la funcion Longitud
-    int max= Longitud(TCadena,mostrar);
-
-    //Bucle que recorre todas las posiciones de TCadena+1 (para contar el \0)
-    for(int i; i<max+1;i++){
-
-        //Asignamos a la posicion actual de TCadenarev el valor contrario de TCadena
-        TCadenarev[i]=TCadena[max-i];
-    }
-
-    //Mostramos el valor de TCadenarev
-    std::cout << TCadenarev;
-
-    //Devolvemos la cadena TCadenarev
-    return TCadenarev[120];
-
-}
-
-//Funcion 6
-bool lletraigual(char TCadena[120]){
-
-     //creamos variable
-    bool mostrar=false;
-
-    bool resultat;
-
-    //Creamos variable con el return de la funcion Longitud
-    int max= Longitud(TCadena,mostrar);
-
-    //Si el primer valor de la cadena es igual al ultimo (su longitud -1) entramos al if
-    if(TCadena[0]==TCadena[max-1]){
-
-        //Marcamos el booleano como true
-        resultat=true;
-
-    //Sino
-    }else{
+    case 3:
+      system("clear");
+      cout << "\033[1;32mHas conseguido " << puntos << " puntos \033[0m" << endl;
+      cout << "\033[1;36mAhora juega la máquina\033[0m" << endl;
+      while (puntosMaquina < puntos){
+        cout << "\033[1;36mLa maquina roba carta\033[0m" << endl;
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        manoMaquina[carta_mano_maquina] = baraja[rand() % 52];
         
-        //Marcamos el booleano como false
-        resultat=false;
+        //Mismo caso que los anteriores con mostrarcarta, pero añadimos puntuacion a la maquina y no al usuario
+        puntosMaquina = mostrarcarta(puntosMaquina, manoMaquina[carta_mano_maquina]);       
+        cout << "\033[1;37m Puntos maquina: " << puntosMaquina << endl;
+        carta_mano_maquina++;
+      }
+      
+      //Podriamos crear una funcion parecida a la de puntuacion, pero como solo se usa 1 vez no es necesario
+      if (puntosMaquina > 21){
+        cout << "\033[1;31mLa máquina se ha pasado\033[0m" << endl;
+        cout << "\033[1;33mFELICIDADES, HAS GANADO!\033[0m" << endl;
+      }
+      else if (puntosMaquina == puntos){
+        cout << "\033[1;33mLa máquina se planta\033[0m" << endl;
+        cout << "\033[1;33mEmpate\033[0m" << endl;
+      }
+      else{
+        cout << "\033[1;33mLa máquina se planta\033[0m" << endl;
+        cout << "\033[1;31mHas perdido...\033[0m" << endl;
+      }
+      cout << "\033[1;35mTu has conseguido " << puntos << " puntos y la máquina " << puntosMaquina << " puntos\033[0m" << endl;
+      repetir = false;
+      break;
+
+    case 4:
+      for (int contadorBaraja = 0; contadorBaraja < 52; contadorBaraja++)
+      {
+        //Llamamos a la funcion mostrar carta pero enviando toda la baraja para ver que queda
+        puntos = mostrarcarta(puntos, baraja[contadorBaraja]);
+      }
+      break;
+
+    case 0:
+      repetir = false;
+      break;
     }
+  } while (repetir);
 
+  return 0;
+}
 
-    //Devolvemos el booleano resultat
-    return resultat;
+//Funcion para contar puntuacion y mostrar valor de carta
+int mostrarcarta(int puntos, carta mano)
+{
 
+  //Segun el valor de la carta mostramos un nombre o otro y segun el valaor de puntos sumamos un valor o otro
+  switch (mano.numero){
+    case 1:
+      cout << "\033[1;33m A de " << mano.palo << "\033[0m" << endl;
+      if (puntos + 11 > 21){
+        puntos = puntos + 1;
+      }
+      else{
+        puntos = puntos + 11;
+      }
+      break;
+    case 11:
+      cout << "\033[1;33m Sota de " << mano.palo << "\033[0m" << endl;
+      puntos = puntos + 10;
+      break;
+    case 12:
+      cout << "\033[1;33m Caballo de " << mano.palo << "\033[0m" << endl;
+      puntos = puntos + 10;
+      break;
+    case 13:
+      cout << "\033[1;33m Rey de " << mano.palo << "\033[0m" << endl;
+      puntos = puntos + 10;
+      break;
 
+    default:
+      cout << "\033[1;33m " << mano.numero << " de " << mano.palo << "\033[0m" << endl;
+      puntos = puntos + mano.numero;
+      break;
+  }
+
+  //Devolvemos la nueva puntuacion
+  return puntos;
+}
+
+//Funcion para mostrar el estado actual de nuestra puntuacion
+bool puntuacion(int puntos){
+  
+  //Booleano por defecto true
+  bool repetir = true;
+
+  //Si es mayor de 21 o igual a 21 mostramos cada caso y enviamos false, los demas casos mostramos puntuacion y enviamos true
+  if (puntos > 21)
+      {
+        cout << "\033[1;31mTe has pasado... puntos: " << puntos << "\033[0m" << endl;
+        cout << "\033[1;31mHas perdido\033[0m" << endl;
+        repetir = false;
+      }
+      else if (puntos == 21)
+      {
+        cout << "\033[1;33mFELICIDADES tienes " << puntos << " puntos!(Blackjack)\033[0m" << endl;
+        repetir = false;
+      }
+      else
+      {
+        cout << "\033[1;32mTienes " << puntos << " puntos \033[0m" << endl;
+      }
+  
+  //Devolvemos el booleano
+  return repetir;
 }
